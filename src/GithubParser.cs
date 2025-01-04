@@ -44,7 +44,6 @@ public static class GithubParser
         var doc = new HtmlDocument();
         doc.LoadHtml(contributionPage);
 
-        // Get total contributions
         var contribNode = doc.DocumentNode.SelectSingleNode("//div[@class='js-yearly-contributions']//h2");
         var contribMatch = contribNode?.InnerText.Trim().Split(' ').FirstOrDefault();
         if (contribMatch == null)
@@ -52,20 +51,17 @@ public static class GithubParser
             return null;
         }
 
-        var contribCount = string.IsNullOrEmpty(contribMatch)
-            ? int.Parse(contribMatch.Replace(",", ""))
-            : 0;
-
-        // Get contribution days
         var dayNodes = doc.DocumentNode.SelectNodes("//td[contains(@class, 'ContributionCalendar-day')]");
-        if (dayNodes == null) return null;
+        if (dayNodes == null)
+        {
+            return null;
+        }
 
         var contributions = GetFlatContributions(dayNodes, doc.DocumentNode);
 
         return new YearContributionData
         {
             Year = year,
-            Total = contribCount,
             Contributions = contributions
         };
     }
@@ -74,28 +70,26 @@ public static class GithubParser
         HtmlNodeCollection dayNodes,
         HtmlNode pageNode) =>
         dayNodes
-            .Select(dayNode => ParseDay(dayNode, pageNode).Value)
+            .Select(dayNode => ParseDay(dayNode, pageNode))
             .Where(value => value.Count != 0)
+            .OrderBy(value => value.Date)
             .ToList();
 
-    private static (int[] Date, ContributionValue Value) ParseDay(HtmlNode dayNode, HtmlNode pageNode)
+    private static ContributionValue ParseDay(HtmlNode dayNode, HtmlNode pageNode)
     {
-        var dateParts = dayNode.GetAttributeValue("data-date", "")
-            .Split('-')
-            .Select(int.Parse)
-            .ToArray();
-
+        var dateString = dayNode.GetAttributeValue("data-date", "");
+        
         var tooltipNode = pageNode.SelectSingleNode($"//tool-tip[contains(@for, '{dayNode.Id}')]");
-        var contributionCount = tooltipNode.InnerText.Trim().Split(' ').FirstOrDefault();
+        var countString = tooltipNode.InnerText.Trim().Split(' ').FirstOrDefault();
 
-        var value = new ContributionValue
+        var count = countString != null
+            ? int.TryParse(countString, out var c) ? c : 0
+            : 0;
+
+        return new ContributionValue
         {
-            Date = dayNode.GetAttributeValue("data-date", ""),
-            Count = contributionCount != null
-                ? int.TryParse(contributionCount, out var count) ? count : 0
-                : 0
+            Date = dateString,
+            Count = count
         };
-
-        return (dateParts, value);
     }
 }
