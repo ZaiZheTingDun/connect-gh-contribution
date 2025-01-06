@@ -47,13 +47,22 @@ dotnet run
 2. It analyzes the contribution patterns for each day
 3. Creates a temporary local repository
 4. Recreates commits with the correct dates to match your contribution pattern
-5. Pushes the changes to your target repository
+5. Pushes the changes to your target repository on a username-specific branch
 
 ## Notes
 
-- The tool will create a new branch called `cgc` in the target repository
+- The tool will create a new branch called `cgc-{username}` in the target repository
+  - For example, if your username is "john-doe", the branch will be `cgc-john-doe`
+  - This allows multiple users to use the same target repository without conflicts
 - Existing commits in the target repository will be preserved
 - The contribution recreation process may take some time depending on your contribution history
+
+## Multi-User Support
+
+Multiple users can use the same target repository by:
+1. Each user having their own `config.json` with their GitHub username
+2. Running the tool with their configuration
+3. Changes will be pushed to separate branches (`cgc-{username}`)
 
 ## License
 

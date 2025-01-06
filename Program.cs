@@ -40,7 +40,7 @@ Directory.Delete($"{tmpPath}/.git", true);
 await GitCommand.Execute(tmpPath, "init");
 await GitCommand.Execute(tmpPath, "remote add origin " + repoUrl);
 await GitCommand.Execute(tmpPath, "fetch");
-await GitCommand.Execute(tmpPath, "checkout -b cgc");
+await GitCommand.Execute(tmpPath, $"checkout -b cgc-{config.Username}");
 
 // Calculate total commits needed
 var totalCommits = dataOfYears.Sum(year =>
@@ -82,6 +82,6 @@ Console.ForegroundColor = ConsoleColor.Green;
 Console.WriteLine("Pushing to GitHub...");
 Console.ResetColor();
 // Push changes
-await GitCommand.Execute(tmpPath, "push --set-upstream --force origin cgc");
+await GitCommand.Execute(tmpPath, $"push --set-upstream --force origin cgc-{config.Username}");
 
 
