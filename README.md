@@ -28,7 +28,7 @@ A tool to aggregate your GitHub contribution graph from multiple accounts into a
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone git@github.com:ZaiZheTingDun/connect-gh-contribution.git
 cd connect-gh-contribution
 ```
 2. Create and configure your `config.json` file
