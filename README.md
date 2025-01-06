@@ -15,7 +15,6 @@ A tool to aggregate your GitHub contribution graph from multiple accounts into a
 1. Create a `config.json` file in the project root (you can copy from `config.json.example`)
 2. Configure the following settings:
 ```json
-json
 {
 "Username": "your github username",
 "RepositoryUrl": "git@github.com:<username>/<repository>.git"
@@ -23,7 +22,7 @@ json
 ```
 
 - `Username`: Your GitHub username
-- `RepositoryUrl`: SSH URL of the target repository where contributions will be recreated
+- `RepositoryUrl`: The SSH URL of the target repository where contributions will be recreated. It’s recommended to create a new repository specifically for hosting the recreated commits to avoid conflicts or clutter in existing repositories.
 
 ## Setup
 
