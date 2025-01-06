@@ -1,4 +1,4 @@
 {
   "Username": "your github username",
-  "RepositoryUrl": "git@github.com:<xxx>/<xxx>.git"
+  "RepositoryUrl": "git@github.com:<username>/<repository>.git"
 }
