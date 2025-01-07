@@ -35,12 +35,23 @@ if (Directory.Exists(tmpPath))
 Directory.CreateDirectory(tmpPath);
 await GitCommand.Execute(tmpPath, $"clone {repoUrl} .");
 
-// Clean all commits by deleting .git and reinitializing
-Directory.Delete($"{tmpPath}/.git", true);
-await GitCommand.Execute(tmpPath, "init");
-await GitCommand.Execute(tmpPath, "remote add origin " + repoUrl);
-await GitCommand.Execute(tmpPath, "fetch");
-await GitCommand.Execute(tmpPath, $"checkout -b cgc-{config.Username}");
+// Create or checkout to the target branch
+try
+{
+    await GitCommand.Execute(tmpPath, $"checkout -b cgc-{config.Username}");
+}
+catch (Exception e)
+{
+    if (e.Message.Contains("already exists"))
+    {
+        await GitCommand.Execute(tmpPath, $"checkout cgc-{config.Username}");
+    }
+    else
+    {
+        Console.WriteLine(e);
+        throw;
+    }
+}
 
 // Calculate total commits needed
 var totalCommits = dataOfYears.Sum(year =>
@@ -55,18 +66,42 @@ foreach (var yearData in dataOfYears)
     foreach (var contribution in yearData.Contributions)
     {
         var date = DateTime.Parse(contribution.Date);
-        var commitsNeeded = contribution.Count;
+        var targetCommits = contribution.Count;
+        int commitsNeeded;
+
+        // Count existing commits for this date
+        try
+        {
+            var existingCommits = await GitCommand.Execute(tmpPath,
+                $"rev-list --count --after=\"{date:yyyy-MM-dd} 00:00\" --before=\"{date:yyyy-MM-dd} 23:59:59\" HEAD");
+            var currentCommitCount = int.Parse(existingCommits.Trim());
+            commitsNeeded = Math.Max(0, targetCommits - currentCommitCount);
+        }
+        catch
+        {
+            // No commits
+            commitsNeeded = targetCommits;
+        }
 
         // Create missing commits
         for (var i = 0; i < commitsNeeded; i++)
         {
             // Create or update the commit file
             var commitFile = Path.Combine(tmpPath, "commit.txt");
-            await File.WriteAllTextAsync(commitFile, $"commit on {date:yyyy-MM-dd} #{i}");
+            await File.WriteAllTextAsync(commitFile, $"commit on {date:yyyy-MM-dd} {i}");
 
             // Stage, commit and push with the specific date
             await GitCommand.Execute(tmpPath, "add .");
-            await GitCommand.Execute(tmpPath, $"commit --date=\"{date:yyyy-MM-dd} 12:00\" -m \"commit {i}\"");
+
+            // Set both author and committer dates
+            var commitDate = $"{date:yyyy-MM-dd} 12:00";
+            var envVars = new Dictionary<string, string>
+            {
+                ["GIT_COMMITTER_DATE"] = commitDate,
+                ["GIT_AUTHOR_DATE"] = commitDate
+            };
+
+            await GitCommand.Execute(tmpPath, $"commit --date=\"{commitDate}\" -m \"commit {date:yyyy-MM-dd}\"", envVars);
 
             currentProgress++;
             progressBar.Update(currentProgress);
@@ -83,5 +118,3 @@ Console.WriteLine("Pushing to GitHub...");
 Console.ResetColor();
 // Push changes
 await GitCommand.Execute(tmpPath, $"push --set-upstream --force origin cgc-{config.Username}");
-
-

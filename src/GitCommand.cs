@@ -2,7 +2,7 @@ namespace CGC;
 
 public static class GitCommand
 {
-    public static async Task Execute(string workingDirectory, string arguments)
+    public static async Task<string> Execute(string workingDirectory, string arguments, Dictionary<string, string>? envVars = null)
     {
         var process = new System.Diagnostics.Process
         {
@@ -18,14 +18,24 @@ public static class GitCommand
             }
         };
 
+        if (envVars != null)
+        {
+            foreach (var (key, value) in envVars)
+            {
+                process.StartInfo.Environment[key] = value;
+            }
+        }
+        
         process.Start();
-        await process.StandardOutput.ReadToEndAsync();
+        var output = await process.StandardOutput.ReadToEndAsync();
         await process.WaitForExitAsync();
 
         if (process.ExitCode != 0)
         {
             var error = await process.StandardError.ReadToEndAsync();
-            throw new Exception($"Git command failed: {error}");
+            throw new Exception($"Git command {arguments} failed: {error}");
         }
+        
+        return output;
     }
 }
