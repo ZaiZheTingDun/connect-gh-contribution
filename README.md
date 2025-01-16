@@ -16,7 +16,7 @@ A tool to aggregate your GitHub contribution graph from multiple accounts into a
 2. Configure the following settings:
 ```json
 {
-"Username": "your github username",
+"Username": "the github username that you what to merge the graph into your current account",
 "RepositoryUrl": "git@github.com:<username>/<repository>.git"
 }
 ```
