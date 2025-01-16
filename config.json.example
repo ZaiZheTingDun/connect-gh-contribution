@@ -1,4 +1,4 @@
 {
-  "Username": "your github username",
+  "Username": "the github username that you what to merge the graph into your current account",
   "RepositoryUrl": "git@github.com:<username>/<repository>.git"
 }
