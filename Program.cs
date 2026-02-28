@@ -1,5 +1,4 @@
 ﻿using CGC;
-using CGC.types;
 
 var config = Configuration.Load();
 var branchName = $"cgc-{config.Username}";
@@ -8,22 +7,8 @@ Console.ForegroundColor = ConsoleColor.Green;
 Console.WriteLine("Fetching your contributions...");
 Console.ResetColor();
 
-var githubClient = new GithubClient();
-var profilePage = await githubClient.FetchGitHubProfilePage(config.Username);
-var githubYears = GithubParser.GetYears(profilePage);
-
-var dataOfYears = new List<YearContributionData>();
-foreach (var githubYear in githubYears)
-{
-    var contributionsPage = await githubClient.FetchGitHubContributionsPage(githubYear.Href);
-    var dataOfYear = GithubParser.GetDataOfYear(contributionsPage, githubYear.Year);
-    if (dataOfYear != null)
-    {
-        dataOfYears.Add(dataOfYear);
-    }
-}
-
-dataOfYears = dataOfYears.OrderBy(date => date.Year).ToList();
+var githubClient = new GithubClient(config.GithubToken);
+var dataOfYears = await githubClient.FetchContributionDataByYear(config.Username);
 
 var repoUrl = config.RepositoryUrl;
 var tmpPath = Path.Combine(Path.GetTempPath(), "cgc-tmp");
@@ -66,7 +51,7 @@ foreach (var yearData in dataOfYears)
 {
     foreach (var contribution in yearData.Contributions)
     {
-        var date = DateTime.Parse(contribution.Date);
+        var date = contribution.Date;
         var targetCommits = contribution.Count;
         int commitsNeeded;
 
@@ -74,7 +59,7 @@ foreach (var yearData in dataOfYears)
         try
         {
             var existingCommits = await GitCommand.Execute(tmpPath,
-                $"rev-list --count --after=\"{date:yyyy-MM-dd} 00:00\" --before=\"{date:yyyy-MM-dd} 23:59:59\" HEAD");
+                $"rev-list --count --grep=\"^commit {date}$\" HEAD");
             var currentCommitCount = int.Parse(existingCommits.Trim());
             commitsNeeded = Math.Max(0, targetCommits - currentCommitCount);
         }
@@ -89,20 +74,20 @@ foreach (var yearData in dataOfYears)
         {
             // Create or update the commit file
             var commitFile = Path.Combine(tmpPath, $"commit-{config.Username}.txt");
-            await File.WriteAllTextAsync(commitFile, $"commit on {date:yyyy-MM-dd} {i}");
+            await File.WriteAllTextAsync(commitFile, $"commit on {date} {i}");
 
             // Stage, commit and push with the specific date
             await GitCommand.Execute(tmpPath, "add .");
 
-            // Set both author and committer dates
-            var commitDate = $"{date:yyyy-MM-dd} 12:00";
+            // Set both author and committer dates (explicit UTC)
+            var commitDate = $"{date}T12:00:00+0000";
             var envVars = new Dictionary<string, string>
             {
                 ["GIT_COMMITTER_DATE"] = commitDate,
                 ["GIT_AUTHOR_DATE"] = commitDate
             };
 
-            await GitCommand.Execute(tmpPath, $"commit --date=\"{commitDate}\" -m \"commit {date:yyyy-MM-dd}\"",
+            await GitCommand.Execute(tmpPath, $"commit --date=\"{commitDate}\" -m \"commit {date}\"",
                 envVars);
 
             currentProgress++;

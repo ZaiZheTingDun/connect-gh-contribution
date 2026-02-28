@@ -17,11 +17,13 @@ A tool to aggregate your GitHub contribution graph from multiple accounts into a
 ```json
 {
 "Username": "the github username that you what to merge the graph into your current account",
+"GithubToken": "github personal access token with read:user scope",
 "RepositoryUrl": "git@github.com:<username>/<repository>.git"
 }
 ```
 
 - `Username`: Your GitHub username
+- `GithubToken`: A GitHub Personal Access Token used to call the GitHub GraphQL API
 - `RepositoryUrl`: The SSH URL of the target repository where contributions will be recreated. It’s recommended to create a new repository specifically for hosting the recreated commits to avoid conflicts or clutter in existing repositories.
 
 ## Setup
@@ -43,7 +45,7 @@ dotnet run
 
 ## How It Works
 
-1. The tool fetches your GitHub contribution history from your profile
+1. The tool fetches your GitHub contribution history from the GitHub GraphQL API
 2. It analyzes the contribution patterns for each day
 3. Creates a temporary local repository
 4. Recreates commits with the correct dates to match your contribution pattern

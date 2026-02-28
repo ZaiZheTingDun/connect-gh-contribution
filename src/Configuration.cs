@@ -5,6 +5,7 @@ namespace CGC;
 public class Configuration
 {
     public string Username { get; init; } = null!;
+    public string GithubToken { get; init; } = null!;
     public string RepositoryUrl { get; init; } = null!;
 
     public static Configuration Load()
