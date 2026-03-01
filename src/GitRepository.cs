@@ -46,8 +46,11 @@ public class GitRepository(string repoUrl, string username)
             }
         }
 
-        // Rebase the branch to get latest commits
-        await GitCommand.Execute(_tmpPath, $"rebase {_defaultBranch}");
+        // Rebase the branch to get latest commits from default branch (if not empty)
+        if (!_isEmpty)
+        {
+            await GitCommand.Execute(_tmpPath, $"rebase {_defaultBranch}");
+        }
     }
 
     public async Task<int> GetExistingCommitCount(string date)
@@ -75,7 +78,7 @@ public class GitRepository(string repoUrl, string username)
         await GitCommand.Execute(_tmpPath, "add .");
 
         // Set both author and committer dates (explicit UTC)
-        var commitDate = $"{date}T12:00:00";
+        var commitDate = $"{date}T12:00:00+0000";
         var envVars = new Dictionary<string, string>
         {
             ["GIT_COMMITTER_DATE"] = commitDate,
