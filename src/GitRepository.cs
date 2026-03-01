@@ -45,6 +45,9 @@ public class GitRepository(string repoUrl, string username)
                 throw;
             }
         }
+
+        // Rebase the branch to get latest commits
+        await GitCommand.Execute(_tmpPath, $"rebase {_defaultBranch}");
     }
 
     public async Task<int> GetExistingCommitCount(string date)
